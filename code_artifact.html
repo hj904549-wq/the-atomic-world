@@ -1,0 +1,894 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#02040a" />
+    <title>سفر به دنیای اتم‌ها | پروژه موشن گرافیک علمی پایه نهم</title>
+    <link rel="stylesheet" href="style.css" />
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Vazirmatn for crisp Persian RTL scientific typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+    <!-- Three.js r128 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  </head>
+  <body>
+    <div id="viewport-wrapper">
+      <div id="cinematic-stage">
+        <!-- 1. Three.js WebGL 3D Canvas -->
+        <canvas id="webgl-canvas" aria-label="نمای سه‌بعدی تعاملی ساختار اتم"></canvas>
+        <div id="webgl-fallback" role="status" aria-live="polite">
+          برای نمایش تجربه سه‌بعدی، مرورگر باید از WebGL پشتیبانی کند. لطفاً از یک مرورگر به‌روز استفاده کنید.
+        </div>
+
+        <!-- 2. Atmospheric Scientific Grid & Vignette -->
+        <div class="scientific-grid-overlay"></div>
+        <div class="cinematic-vignette"></div>
+
+        <!-- 2.5 One-Click Cinematic Sound & Foley Activation Banner -->
+        <div id="audio-launch-overlay">
+          <button
+            id="btn-unlock-sound"
+            class="flex items-center gap-3 px-5 py-2.5 rounded-full bg-gradient-to-r from-cyan-500 via-blue-600 to-amber-500 text-white font-bold text-xs sm:text-sm shadow-[0_0_30px_rgba(0,240,255,0.6)] hover:scale-105 active:scale-95 transition border border-white/40 cursor-pointer"
+          >
+            <span class="w-2.5 h-2.5 rounded-full bg-white animate-ping"></span>
+            <span
+              >🔊 شروع تجربه سینمایی با موسیقی متن و افکت صوتی (کلیک کنید)</span
+            >
+          </button>
+        </div>
+
+        <!-- 3. Dynamic 3D-Projected Particle Charge Badges (+, 0, -) -->
+        <div
+          id="particle-badges-container"
+          class="absolute inset-0 pointer-events-none z-10 overflow-hidden"
+        ></div>
+
+        <!-- 4. Dynamic 3D-to-2D SVG Scientific Callout Lines -->
+        <svg
+          id="svg-callout-layer"
+          viewBox="0 0 1920 1080"
+          preserveAspectRatio="none"
+        >
+          <defs>
+            <linearGradient id="cyanLineGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#00f0ff" stop-opacity="0.95" />
+              <stop offset="100%" stop-color="#0066ff" stop-opacity="0.35" />
+            </linearGradient>
+            <linearGradient
+              id="amberLineGrad"
+              x1="0%"
+              y1="0%"
+              x2="100%"
+              y2="0%"
+            >
+              <stop offset="0%" stop-color="#ff8c1a" stop-opacity="0.95" />
+              <stop offset="100%" stop-color="#ff8c1a" stop-opacity="0.25" />
+            </linearGradient>
+            <linearGradient
+              id="silverLineGrad"
+              x1="0%"
+              y1="0%"
+              x2="100%"
+              y2="0%"
+            >
+              <stop offset="0%" stop-color="#e2e8f0" stop-opacity="0.95" />
+              <stop offset="100%" stop-color="#94a3b8" stop-opacity="0.25" />
+            </linearGradient>
+          </defs>
+
+          <!-- Dynamic Callout Group 1 (Nucleus / Proton) -->
+          <g id="callout-1" opacity="0">
+            <circle id="c1-dot" cx="960" cy="540" r="5" fill="#ff8c1a" />
+            <circle
+              id="c1-ring"
+              class="svg-pulse-ring"
+              cx="960"
+              cy="540"
+              r="5"
+              fill="none"
+              stroke="#ff8c1a"
+              stroke-width="2"
+            />
+            <polyline
+              id="c1-line"
+              points="960,540 1100,420 1240,420"
+              fill="none"
+              stroke="url(#amberLineGrad)"
+              stroke-width="2.5"
+              stroke-dasharray="5,3"
+            />
+          </g>
+
+          <!-- Dynamic Callout Group 2 (Electron Cloud / Neutron) -->
+          <g id="callout-2" opacity="0">
+            <circle id="c2-dot" cx="960" cy="540" r="5" fill="#00f0ff" />
+            <circle
+              id="c2-ring"
+              class="svg-pulse-ring"
+              cx="960"
+              cy="540"
+              r="5"
+              fill="none"
+              stroke="#00f0ff"
+              stroke-width="2"
+            />
+            <polyline
+              id="c2-line"
+              points="960,540 780,650 640,650"
+              fill="none"
+              stroke="url(#cyanLineGrad)"
+              stroke-width="2.5"
+              stroke-dasharray="5,3"
+            />
+          </g>
+        </svg>
+
+        <!-- 5. Top Scientific Telemetry Header -->
+        <div id="hud-layer">
+          <header class="flex items-center justify-between w-full z-20">
+            <div class="flex items-center gap-3 sci-panel px-4 py-2">
+              <div
+                class="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-pulse shadow-[0_0_10px_#00f0ff]"
+              ></div>
+              <span
+                class="text-xs md:text-sm font-bold tracking-wide text-cyan-300"
+                >شبیه‌ساز کوانتومی ساختار ماده</span
+              >
+              <span class="text-slate-500">|</span>
+              <span
+                id="hud-scene-title"
+                class="text-xs md:text-sm text-slate-200 font-medium"
+                >بخش اول: سفر به درون ماده</span
+              >
+            </div>
+
+            <!-- Scale & Element Telemetry -->
+            <div
+              class="hidden sm:flex items-center gap-4 sci-panel px-4 py-2 text-xs md:text-sm"
+            >
+              <div class="flex items-center gap-1.5">
+                <span class="text-slate-400">مقیاس دید:</span>
+                <span
+                  id="hud-scale-readout"
+                  class="font-mono text-cyan-300 font-bold"
+                  dir="ltr"
+                  >10⁻² m</span
+                >
+              </div>
+              <span class="text-slate-600">|</span>
+              <div class="flex items-center gap-1.5">
+                <span class="text-slate-400">نمونه اتمی:</span>
+                <span class="text-amber-400 font-bold">لیتیم-۷ (₃⁷Li)</span>
+              </div>
+            </div>
+          </header>
+
+          <!-- =========================================================
+                 SCENE 01 (00:00 - 00:07): THE JOURNEY INTO MATTER
+                 ========================================================= -->
+          <section
+            id="scene-1"
+            class="scene-block active flex flex-col items-center justify-center text-center px-4"
+          >
+            <div class="mt-auto mb-auto flex flex-col items-center">
+              <div
+                class="kinetic-enter inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-cyan-950/70 border border-cyan-400/30 text-cyan-300 text-xs md:text-sm font-semibold mb-4 shadow-lg"
+              >
+                <span>علوم تجربی پایه نهم</span>
+                <span>•</span>
+                <span>فصل ساختار اتم</span>
+              </div>
+              <h1
+                class="kinetic-enter delay-100 text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-white glow-cyan tracking-tight leading-tight mb-4"
+              >
+                «سفر به دنیای اتم‌ها»
+              </h1>
+              <p
+                class="kinetic-enter delay-200 text-sm sm:text-lg md:text-2xl text-slate-300 max-w-2xl font-light leading-relaxed"
+              >
+                نگاهی علمی و سه‌بعدی به بنیادی‌ترین ذرات سازنده جهان هستی
+              </p>
+              <div
+                class="kinetic-enter delay-300 mt-6 flex items-center gap-3 text-xs md:text-sm text-cyan-400/90 bg-slate-900/80 px-4 py-2 rounded-lg border border-cyan-500/20"
+              >
+                <span>گذر از شبکه بلوری ماده به مقیاس زیرمیکروسکوپی</span>
+                <span class="font-mono text-amber-400" dir="ltr"
+                  >(1 Å = 10⁻¹⁰ m)</span
+                >
+              </div>
+            </div>
+          </section>
+
+          <!-- =========================================================
+                 SCENE 02 (00:07 - 00:15): INTRODUCING THE ATOM
+                 ========================================================= -->
+          <section
+            id="scene-2"
+            class="scene-block flex flex-col justify-between p-4 sm:p-8 md:p-12"
+          >
+            <!-- Top Question Banner -->
+            <div class="mt-10 sm:mt-12 self-center text-center kinetic-enter">
+              <h2
+                class="text-2xl sm:text-4xl md:text-5xl font-extrabold text-white glow-cyan mb-2"
+              >
+                «اتم از چه بخش‌هایی تشکیل شده است؟»
+              </h2>
+              <p class="text-xs sm:text-sm md:text-base text-cyan-200/80">
+                هر اتم از دو بخش اصلی با ویژگی‌های کاملاً متفاوت تشکیل می‌شود
+              </p>
+            </div>
+
+            <!-- Right & Left Callout Cards -->
+            <div
+              class="my-auto grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-48 lg:gap-72 items-center w-full max-w-6xl mx-auto"
+            >
+              <!-- Right Card: Central Nucleus -->
+              <div
+                class="kinetic-enter delay-100 sci-panel sci-panel-amber p-4 sm:p-5 md:max-w-sm justify-self-start"
+              >
+                <div class="flex items-center gap-2.5 mb-2">
+                  <span
+                    class="w-3.5 h-3.5 rounded-full bg-amber-500 shadow-[0_0_12px_#ff8c1a]"
+                  ></span>
+                  <h3 class="text-base sm:text-xl font-bold text-amber-400">
+                    ۱. هسته اتم (مرکز چگال)
+                  </h3>
+                </div>
+                <p class="text-xs sm:text-sm text-slate-200 leading-relaxed">
+                  بخش بسیار کوچک و فوق‌العاده فشرده در مرکز اتم که تقریباً
+                  <strong class="text-white">تمام جرم اتم</strong> در آن متمرکز
+                  شده است.
+                </p>
+              </div>
+
+              <!-- Left Card: Electron Region -->
+              <div
+                class="kinetic-enter delay-200 sci-panel sci-panel-cyan p-4 sm:p-5 md:max-w-sm justify-self-end"
+              >
+                <div class="flex items-center gap-2.5 mb-2">
+                  <span
+                    class="w-3.5 h-3.5 rounded-full bg-cyan-400 shadow-[0_0_12px_#00f0ff]"
+                  ></span>
+                  <h3 class="text-base sm:text-xl font-bold text-cyan-300">
+                    ۲. ناحیه الکترونی (فضای پیرامون)
+                  </h3>
+                </div>
+                <p class="text-xs sm:text-sm text-slate-200 leading-relaxed">
+                  فضای سه‌بعدی بسیار گسترده در اطراف هسته که الکترون‌ها با سرعت
+                  زیاد در آن حضور دارند.
+                </p>
+                <div
+                  class="mt-2.5 pt-2 border-t border-cyan-500/20 text-[11px] sm:text-xs text-cyan-300/90 flex items-center gap-1.5"
+                >
+                  <span
+                    class="inline-block w-2 h-2 rounded-full bg-cyan-400"
+                  ></span>
+                  <span
+                    >نمایش بر اساس
+                    <strong>مدل آموزشی ابر و لایه‌های الکترونی</strong> (نه مدار
+                    سیاره‌ای تخت)</span
+                  >
+                </div>
+              </div>
+            </div>
+            <div class="h-12"></div>
+          </section>
+
+          <!-- =========================================================
+                 SCENE 03 (00:15 - 00:27): INSIDE THE NUCLEUS
+                 ========================================================= -->
+          <section
+            id="scene-3"
+            class="scene-block flex flex-col justify-between p-4 sm:p-8 md:p-12"
+          >
+            <div class="mt-10 sm:mt-12 self-center text-center kinetic-enter">
+              <div
+                class="inline-block px-3 py-1 rounded-md bg-amber-500/20 border border-amber-400/40 text-amber-300 text-xs font-bold mb-1.5"
+              >
+                بزرگ‌نمایی هسته اتم
+              </div>
+              <h2
+                class="text-2xl sm:text-4xl font-extrabold text-white glow-amber"
+              >
+                درون هسته اتم چه ذراتی قرار دارند؟
+              </h2>
+            </div>
+
+            <!-- Two Detailed Particle Cards (Proton & Neutron) -->
+            <div
+              class="my-auto flex flex-col md:flex-row justify-between items-center gap-4 w-full max-w-6xl mx-auto"
+            >
+              <!-- Proton Card (Right side in RTL) -->
+              <div
+                class="kinetic-enter delay-100 sci-panel sci-panel-amber p-4 sm:p-6 w-full md:w-80 lg:w-96"
+              >
+                <div class="flex items-center justify-between mb-3">
+                  <div class="flex items-center gap-3">
+                    <div
+                      class="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-orange-600 flex items-center justify-center text-white font-black text-xl shadow-[0_0_16px_rgba(255,140,26,0.7)]"
+                    >
+                      +
+                    </div>
+                    <div>
+                      <h3 class="text-lg sm:text-2xl font-black text-amber-400">
+                        «پروتون»
+                      </h3>
+                      <span class="text-xs text-amber-200/80"
+                        >ذره باردار هسته (Proton)</span
+                      >
+                    </div>
+                  </div>
+                  <span
+                    class="px-2.5 py-1 rounded bg-amber-500/20 border border-amber-400/40 text-amber-300 text-xs font-bold"
+                    >۳ عدد در لیتیم</span
+                  >
+                </div>
+                <div
+                  class="space-y-2 text-xs sm:text-sm text-slate-200 border-t border-amber-500/20 pt-3"
+                >
+                  <div class="flex justify-between">
+                    <span class="text-slate-400">بار الکتریکی:</span>
+                    <span class="font-bold text-amber-400">مثبت (+) | +۱</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-slate-400">جرم نسبی:</span>
+                    <span class="font-semibold text-white"
+                      >سنگین (حدود ۱amu)</span
+                    >
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-slate-400">نقش کلیدی:</span>
+                    <span class="font-semibold text-amber-200"
+                      >تعیین‌کننده نوع عنصر (عدد اتمی)</span
+                    >
+                  </div>
+                </div>
+              </div>
+
+              <!-- Neutron Card (Left side in RTL) -->
+              <div
+                class="kinetic-enter delay-300 sci-panel sci-panel-silver p-4 sm:p-6 w-full md:w-80 lg:w-96"
+              >
+                <div class="flex items-center justify-between mb-3">
+                  <div class="flex items-center gap-3">
+                    <div
+                      class="w-10 h-10 rounded-xl bg-gradient-to-br from-slate-100 to-slate-400 flex items-center justify-center text-slate-900 font-black text-xl shadow-[0_0_16px_rgba(226,232,240,0.6)]"
+                    >
+                      ۰
+                    </div>
+                    <div>
+                      <h3 class="text-lg sm:text-2xl font-black text-slate-100">
+                        «نوترون»
+                      </h3>
+                      <span class="text-xs text-slate-400"
+                        >ذره بدون بار هسته (Neutron)</span
+                      >
+                    </div>
+                  </div>
+                  <span
+                    class="px-2.5 py-1 rounded bg-slate-200/15 border border-slate-300/30 text-slate-200 text-xs font-bold"
+                    >۴ عدد در لیتیم</span
+                  >
+                </div>
+                <div
+                  class="space-y-2 text-xs sm:text-sm text-slate-200 border-t border-slate-400/20 pt-3"
+                >
+                  <div class="flex justify-between">
+                    <span class="text-slate-400">بار الکتریکی:</span>
+                    <span class="font-bold text-slate-100"
+                      >خنثی (۰) | بدون بار</span
+                    >
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-slate-400">جرم نسبی:</span>
+                    <span class="font-semibold text-white"
+                      >سنگین (تقریباً برابر پروتون)</span
+                    >
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-slate-400">نقش کلیدی:</span>
+                    <span class="font-semibold text-slate-200"
+                      >ایجاد نیروی هسته‌ای قوی و پایداری هسته</span
+                    >
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="h-12"></div>
+          </section>
+
+          <!-- =========================================================
+                 SCENE 04 (00:27 - 00:37): THE ELECTRON REGION
+                 ========================================================= -->
+          <section
+            id="scene-4"
+            class="scene-block flex flex-col justify-between p-4 sm:p-8 md:p-12"
+          >
+            <div class="mt-10 sm:mt-12 self-center text-center kinetic-enter">
+              <div
+                class="inline-block px-3 py-1 rounded-md bg-cyan-500/20 border border-cyan-400/40 text-cyan-300 text-xs font-bold mb-1.5"
+              >
+                فضای پیرامون هسته
+              </div>
+              <h2
+                class="text-2xl sm:text-4xl font-extrabold text-white glow-cyan"
+              >
+                ناحیه الکترونی و لایه‌های انرژی
+              </h2>
+            </div>
+
+            <div
+              class="my-auto flex flex-col md:flex-row items-center justify-between w-full max-w-6xl mx-auto gap-6"
+            >
+              <!-- Electron Specification Card -->
+              <div
+                class="kinetic-enter delay-100 sci-panel sci-panel-cyan p-5 sm:p-6 w-full md:w-96"
+              >
+                <div class="flex items-center justify-between mb-4">
+                  <div class="flex items-center gap-3">
+                    <div
+                      class="w-11 h-11 rounded-xl bg-gradient-to-br from-cyan-300 to-blue-600 flex items-center justify-center text-slate-950 font-black text-2xl shadow-[0_0_20px_#00f0ff]"
+                    >
+                      −
+                    </div>
+                    <div>
+                      <h3 class="text-xl sm:text-2xl font-black text-cyan-300">
+                        «الکترون»
+                      </h3>
+                      <span class="text-xs text-cyan-200/75"
+                        >ذره پرسرعت پیرامون هسته (Electron)</span
+                      >
+                    </div>
+                  </div>
+                  <span
+                    class="px-2.5 py-1 rounded bg-cyan-500/20 border border-cyan-400/40 text-cyan-300 text-xs font-bold"
+                    >۳ عدد در لیتیم</span
+                  >
+                </div>
+
+                <div
+                  class="space-y-2.5 text-xs sm:text-sm text-slate-200 border-t border-cyan-500/25 pt-3"
+                >
+                  <div class="flex justify-between">
+                    <span class="text-slate-400">بار الکتریکی:</span>
+                    <span class="font-bold text-cyan-300">منفی (−) | ۱−</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-slate-400">جرم نسبی:</span>
+                    <span class="font-semibold text-white"
+                      >بسیار ناچیز (حدود ۱/۱۸۴۰ پروتون)</span
+                    >
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-slate-400">آرایش در لیتیم:</span>
+                    <span class="font-semibold text-cyan-200"
+                      >لایه اول: ۲ الکترون | لایه دوم: ۱ الکترون</span
+                    >
+                  </div>
+                </div>
+              </div>
+
+              <!-- Scientific Note Card -->
+              <div
+                class="kinetic-enter delay-200 sci-panel p-4 sm:p-5 w-full md:w-80 border-r-4 border-r-cyan-400"
+              >
+                <h4 class="text-sm sm:text-base font-bold text-cyan-300 mb-1.5">
+                  نکته مهم علمی پایه نهم:
+                </h4>
+                <p class="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                  الکترون‌ها روی خط‌های دایره‌ای صاف مانند سیاره‌ها حرکت
+                  نمی‌کنند؛ بلکه در
+                  <strong>فضای سه‌بعدی (ابر الکترونی)</strong> در لایه‌های مشخصی
+                  پیرامون هسته در حال حرکت‌اند.
+                </p>
+              </div>
+            </div>
+            <div class="h-12"></div>
+          </section>
+
+          <!-- =========================================================
+                 SCENE 05 (00:37 - 00:47): UNDERSTANDING ATOMIC NUMBER
+                 ========================================================= -->
+          <section
+            id="scene-5"
+            class="scene-block flex flex-col justify-between p-4 sm:p-8 md:p-12"
+          >
+            <div class="mt-10 sm:mt-12 self-center text-center kinetic-enter">
+              <h2
+                class="text-2xl sm:text-4xl font-extrabold text-white glow-cyan"
+              >
+                مفهوم «عدد اتمی» و «اتم خنثی»
+              </h2>
+              <p class="text-xs sm:text-sm text-slate-300 mt-1">
+                بررسی شمارش ذرات بنیادی در اتم لیتیم (Lithium-7)
+              </p>
+            </div>
+
+            <div
+              class="my-auto grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 items-center w-full max-w-6xl mx-auto"
+            >
+              <!-- Right Column: Particle Counter Tally -->
+              <div
+                class="lg:col-span-5 kinetic-enter delay-100 sci-panel p-4 sm:p-6 space-y-3"
+              >
+                <div
+                  class="flex items-center justify-between border-b border-slate-700/80 pb-3"
+                >
+                  <div>
+                    <span class="text-xs text-cyan-400 font-bold block"
+                      >جدول شمارش ذرات زیراتمی</span
+                    >
+                    <h3 class="text-lg sm:text-xl font-black text-white">
+                      عنصر لیتیم (₃Li)
+                    </h3>
+                  </div>
+                  <div
+                    class="w-12 h-12 rounded-xl bg-cyan-500/15 border border-cyan-400/40 flex flex-col items-center justify-center font-mono"
+                  >
+                    <span class="text-[10px] text-slate-300 leading-none"
+                      >7</span
+                    >
+                    <span
+                      class="text-base font-black text-cyan-300 leading-tight"
+                      >Li</span
+                    >
+                    <span class="text-[10px] text-amber-400 leading-none"
+                      >3</span
+                    >
+                  </div>
+                </div>
+
+                <!-- 3 Protons Bar -->
+                <div
+                  id="row-count-proton"
+                  class="counter-row-transition flex items-center justify-between p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/30"
+                >
+                  <div class="flex items-center gap-2.5">
+                    <span
+                      class="w-3.5 h-3.5 rounded-full bg-amber-500 shadow-[0_0_8px_#ff8c1a]"
+                    ></span>
+                    <span class="text-xs sm:text-sm font-bold text-amber-300"
+                      >پروتون‌ها (بار مثبت +)</span
+                    >
+                  </div>
+                  <span
+                    id="val-count-proton"
+                    class="text-base sm:text-lg font-black text-amber-400"
+                    >۳ عدد (+۳)</span
+                  >
+                </div>
+
+                <!-- 4 Neutrons Bar -->
+                <div
+                  id="row-count-neutron"
+                  class="counter-row-transition flex items-center justify-between p-2.5 rounded-lg bg-slate-300/10 border border-slate-300/30"
+                >
+                  <div class="flex items-center gap-2.5">
+                    <span
+                      class="w-3.5 h-3.5 rounded-full bg-slate-200 shadow-[0_0_8px_#e2e8f0]"
+                    ></span>
+                    <span class="text-xs sm:text-sm font-bold text-slate-200"
+                      >نوترون‌ها (بار خنثی ۰)</span
+                    >
+                  </div>
+                  <span
+                    id="val-count-neutron"
+                    class="text-base sm:text-lg font-black text-slate-100"
+                    >۴ عدد (۰)</span
+                  >
+                </div>
+
+                <!-- 3 Electrons Bar -->
+                <div
+                  id="row-count-electron"
+                  class="counter-row-transition flex items-center justify-between p-2.5 rounded-lg bg-cyan-500/10 border border-cyan-400/30"
+                >
+                  <div class="flex items-center gap-2.5">
+                    <span
+                      class="w-3.5 h-3.5 rounded-full bg-cyan-400 shadow-[0_0_8px_#00f0ff]"
+                    ></span>
+                    <span class="text-xs sm:text-sm font-bold text-cyan-300"
+                      >الکترون‌ها (بار منفی −)</span
+                    >
+                  </div>
+                  <span
+                    id="val-count-electron"
+                    class="text-base sm:text-lg font-black text-cyan-300"
+                    >۳ عدد (−۳)</span
+                  >
+                </div>
+              </div>
+
+              <!-- Center Space for 3D Atom -->
+              <div class="hidden lg:block lg:col-span-2"></div>
+
+              <!-- Left Column: Core Scientific Formulas -->
+              <div class="lg:col-span-5 space-y-4">
+                <!-- Formula 1: Atomic Number -->
+                <div
+                  id="card-formula-1"
+                  class="counter-row-transition kinetic-enter delay-200 sci-panel sci-panel-amber p-4 sm:p-5"
+                >
+                  <div class="text-xs text-amber-300 font-bold mb-1">
+                    قانون اول شیمی اتمی:
+                  </div>
+                  <div class="text-base sm:text-xl font-black text-white mb-1">
+                    «عدد اتمی = تعداد پروتون‌ها»
+                  </div>
+                  <p class="text-xs sm:text-sm text-slate-300">
+                    چون اتم لیتیم دارای
+                    <strong class="text-amber-400">۳ پروتون</strong> در هسته خود
+                    است، عدد اتمی آن
+                    <strong class="text-amber-400">۳ (Z = ۳)</strong> می‌باشد.
+                  </p>
+                </div>
+
+                <!-- Formula 2: Neutral Atom -->
+                <div
+                  id="card-formula-2"
+                  class="counter-row-transition kinetic-enter delay-300 sci-panel sci-panel-cyan p-4 sm:p-5"
+                >
+                  <div class="text-xs text-cyan-300 font-bold mb-1">
+                    قانون دوم (تعادل بار الکتریکی):
+                  </div>
+                  <div class="text-base sm:text-xl font-black text-white mb-1">
+                    «اتم خنثی: تعداد پروتون‌ها = تعداد الکترون‌ها»
+                  </div>
+                  <p class="text-xs sm:text-sm text-slate-300">
+                    برابری ۳ بار مثبت
+                    <span class="text-amber-400 font-bold">(+۳)</span> و ۳ بار
+                    منفی <span class="text-cyan-300 font-bold">(−۳)</span> باعث
+                    می‌شود بار کل اتم برابر
+                    <strong class="text-emerald-400">صفر (خنثی)</strong> باشد.
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div class="h-12"></div>
+          </section>
+
+          <!-- =========================================================
+                 SCENE 06 (00:47 - 00:60): FINAL REVEAL & SEAMLESS LOOP
+                 ========================================================= -->
+          <section
+            id="scene-6"
+            class="scene-block flex flex-col justify-between p-4 sm:p-8 md:p-12"
+          >
+            <div class="mt-10 sm:mt-12 self-center text-center kinetic-enter">
+              <h2
+                class="text-2xl sm:text-4xl font-extrabold text-white glow-cyan"
+              >
+                جمع‌بندی ساختار اتم و ذرات سازنده آن
+              </h2>
+              <p class="text-xs sm:text-sm text-cyan-200/80 mt-1">
+                سه ذره بنیادی که تمام عناصر جهان را می‌سازند
+              </p>
+            </div>
+
+            <!-- Bottom 3 Summary Cards -->
+            <div
+              class="mt-auto mb-14 grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-5 w-full max-w-5xl mx-auto"
+            >
+              <!-- Proton Summary -->
+              <div
+                class="kinetic-enter delay-100 sci-panel sci-panel-amber p-3.5 sm:p-4 flex items-center gap-3.5"
+              >
+                <div
+                  class="w-10 h-10 shrink-0 rounded-full bg-amber-500 text-white font-black flex items-center justify-center text-lg shadow-[0_0_15px_#ff8c1a]"
+                >
+                  +
+                </div>
+                <div>
+                  <h4 class="text-sm sm:text-base font-black text-amber-400">
+                    پروتون (Proton)
+                  </h4>
+                  <p class="text-xs text-slate-300">
+                    بار مثبت (+) • مستقر در هسته • تعیین‌کننده عدد اتمی
+                  </p>
+                </div>
+              </div>
+
+              <!-- Neutron Summary -->
+              <div
+                class="kinetic-enter delay-200 sci-panel sci-panel-silver p-3.5 sm:p-4 flex items-center gap-3.5"
+              >
+                <div
+                  class="w-10 h-10 shrink-0 rounded-full bg-slate-200 text-slate-900 font-black flex items-center justify-center text-lg shadow-[0_0_15px_#e2e8f0]"
+                >
+                  ۰
+                </div>
+                <div>
+                  <h4 class="text-sm sm:text-base font-black text-slate-100">
+                    نوترون (Neutron)
+                  </h4>
+                  <p class="text-xs text-slate-300">
+                    بار خنثی (۰) • مستقر در هسته • عامل پایداری هسته
+                  </p>
+                </div>
+              </div>
+
+              <!-- Electron Summary -->
+              <div
+                class="kinetic-enter delay-300 sci-panel sci-panel-cyan p-3.5 sm:p-4 flex items-center gap-3.5"
+              >
+                <div
+                  class="w-10 h-10 shrink-0 rounded-full bg-cyan-400 text-slate-950 font-black flex items-center justify-center text-lg shadow-[0_0_15px_#00f0ff]"
+                >
+                  −
+                </div>
+                <div>
+                  <h4 class="text-sm sm:text-base font-black text-cyan-300">
+                    الکترون (Electron)
+                  </h4>
+                  <p class="text-xs text-slate-300">
+                    بار منفی (−) • در ابر الکترونی • جرم بسیار ناچیز
+                  </p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- =========================================================
+                 BOTTOM INTERACTIVE PLAYER CONTROL BAR
+                 ========================================================= -->
+          <footer class="w-full z-30 pointer-events-auto mt-auto">
+            <div
+              class="sci-panel px-4 py-2.5 sm:px-5 sm:py-3 flex flex-col gap-2"
+            >
+              <!-- Scene Quick-Jump Markers & Timeline Scrubber -->
+              <div class="flex flex-col gap-1.5">
+                <div
+                  class="flex justify-between items-center text-[10px] sm:text-xs text-slate-400 px-1"
+                >
+                  <button
+                    data-jump="0"
+                    class="scene-jump-btn hover:text-cyan-300 transition font-medium"
+                  >
+                    ۱. ورود به ماده (۰۰:۰۰)
+                  </button>
+                  <button
+                    data-jump="7"
+                    class="scene-jump-btn hover:text-cyan-300 transition font-medium"
+                  >
+                    ۲. معرفی اتم (۰۰:۰۷)
+                  </button>
+                  <button
+                    data-jump="15"
+                    class="scene-jump-btn hover:text-amber-300 transition font-medium"
+                  >
+                    ۳. درون هسته (۰۰:۱۵)
+                  </button>
+                  <button
+                    data-jump="27"
+                    class="scene-jump-btn hover:text-cyan-300 transition font-medium"
+                  >
+                    ۴. ناحیه الکترونی (۰۰:۲۷)
+                  </button>
+                  <button
+                    data-jump="37"
+                    class="scene-jump-btn hover:text-cyan-300 transition font-medium"
+                  >
+                    ۵. عدد اتمی (۰۰:۳۷)
+                  </button>
+                  <button
+                    data-jump="47"
+                    class="scene-jump-btn hover:text-cyan-300 transition font-medium"
+                  >
+                    ۶. جمع‌بندی (۰۰:۴۷)
+                  </button>
+                </div>
+
+                <!-- Interactive Scrubber Bar (LTR direction for standard left-to-right time progression) -->
+                <div
+                  id="timeline-track" role="slider" aria-label="جابه‌جایی در زمان تجربه" aria-valuemin="0" aria-valuemax="60" tabindex="0"
+                  dir="ltr"
+                  title="برای جابه‌جایی در زمان کلیک کنید"
+                >
+                  <div id="timeline-progress"></div>
+                  <div id="timeline-thumb"></div>
+                </div>
+              </div>
+
+              <!-- Controls Row -->
+              <div
+                class="flex flex-wrap items-center justify-between gap-2 pt-0.5"
+              >
+                <div class="flex flex-wrap items-center gap-1.5 sm:gap-2.5">
+                  <!-- Play / Pause Button -->
+                  <button
+                    id="btn-play-pause" aria-label="پخش یا توقف تجربه"
+                    class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs sm:text-sm transition shadow-[0_0_15px_rgba(0,240,255,0.4)]"
+                  >
+                    <span id="play-icon">❚❚</span>
+                    <span id="play-label">توقف</span>
+                  </button>
+
+                  <!-- Restart Button -->
+                  <button
+                    id="btn-restart" aria-label="شروع دوباره از ابتدا"
+                    class="px-2.5 py-1.5 rounded-lg bg-slate-800/90 hover:bg-slate-700 text-slate-200 border border-slate-600/50 text-xs sm:text-sm transition"
+                    title="شروع مجدد از ثانیه صفر"
+                  >
+                    بازپخش ↺
+                  </button>
+
+                  <!-- Master Audio Synthesizer Toggle -->
+                  <button
+                    id="btn-audio" aria-label="روشن یا خاموش کردن صدا"
+                    class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800/90 hover:bg-slate-700 text-cyan-300 border border-cyan-500/30 text-xs sm:text-sm transition"
+                  >
+                    <span id="audio-icon">🔇</span>
+                    <span id="audio-label">صدا: خاموش</span>
+                  </button>
+
+                  <!-- Music Sub-Toggle -->
+                  <button
+                    id="btn-music-toggle" aria-label="روشن یا خاموش کردن موسیقی متن"
+                    class="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-emerald-300 border border-emerald-500/30 text-xs transition"
+                    title="قطع/وصل موسیقی متن سینمایی"
+                  >
+                    <span>🎵</span>
+                    <span id="music-toggle-label">موسیقی: روشن</span>
+                  </button>
+
+                  <!-- SFX Sub-Toggle -->
+                  <button
+                    id="btn-sfx-toggle" aria-label="روشن یا خاموش کردن افکت‌های صوتی"
+                    class="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-amber-300 border border-amber-500/30 text-xs transition"
+                    title="قطع/وصل افکت‌های صوتی حرکت و ذرات"
+                  >
+                    <span>⚡</span>
+                    <span id="sfx-toggle-label">افکت حرکت: روشن</span>
+                  </button>
+
+                  <!-- Live Real-Time Audio Spectrum Visualizer -->
+                  <div
+                    class="hidden lg:flex items-center gap-2 bg-slate-950/90 px-2.5 py-1 rounded-lg border border-cyan-500/20"
+                    title="اکولایزر زنده موسیقی و افکت‌های صوتی"
+                  >
+                    <canvas
+                      id="audio-spectrum-canvas"
+                      width="88"
+                      height="22"
+                      class="block"
+                    ></canvas>
+                  </div>
+                </div>
+
+                <!-- Timecode & Fullscreen -->
+                <div class="flex items-center gap-2.5">
+                  <span
+                    class="hidden xl:inline-block text-[11px] text-slate-400"
+                  >
+                    چرخش سه‌بعدی با ماوس/لمس
+                  </span>
+                  <div
+                    id="timecode-display"
+                    class="font-mono text-xs sm:text-sm font-bold text-cyan-300 bg-slate-900/90 px-2.5 py-1 rounded border border-cyan-500/20"
+                    dir="ltr"
+                  >
+                    00:00.0 / 01:00.0
+                  </div>
+                  <button
+                    id="btn-fullscreen" aria-label="تغییر حالت تمام‌صفحه"
+                    class="px-2.5 py-1.5 rounded-lg bg-slate-800/90 hover:bg-slate-700 text-slate-200 border border-slate-600/50 text-xs sm:text-sm transition"
+                  >
+                    تمام‌صفحه ⛶
+                  </button>
+                </div>
+              </div>
+            </div>
+          </footer>
+        </div>
+      </div>
+    </div>
+    <script src="./main.js"></script>
+  </body>
+</html>
